@@ -20,6 +20,7 @@ var (
 	RemoteAddr string
 	SSHUser    string
 	SSHPassWD  string
+	PublicKey  string
 )
 
 func init() {
@@ -30,4 +31,5 @@ func init() {
 	RemoteAddr = loader.Get("RemoteAddr").Raw()
 	SSHUser = loader.Get("SSHUser").Raw()
 	SSHPassWD = loader.Get("SSHPassWD").Raw()
+	PublicKey = loader.Get("PublicKey").Raw()
 }

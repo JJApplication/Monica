@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/JJApplication/fushin/log/private"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -41,7 +42,7 @@ func SSHClientConfigPassword(hostAddr, user, Password string) *SSHClientConfig {
 	}
 }
 
-func SSHClientConfigPulicKey(hostAddr, user, keyPath string) *SSHClientConfig {
+func SSHClientConfigPublicKey(hostAddr, user, keyPath string) *SSHClientConfig {
 	return &SSHClientConfig{
 		Timeout:   time.Second * 5,
 		AuthModel: PUBLICKEY,
@@ -63,6 +64,7 @@ func NewSSHClient(conf *SSHClientConfig) (*ssh.Client, error) {
 	case PUBLICKEY:
 		signer, err := getKey(conf.KeyPath)
 		if err != nil {
+			private.Log.ErrorF("failed to get public key: %s", err.Error())
 			return nil, err
 		}
 		config.Auth = []ssh.AuthMethod{ssh.PublicKeys(signer)}

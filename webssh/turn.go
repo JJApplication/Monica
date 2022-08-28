@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/JJApplication/fushin/log/private"
 	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/ssh"
 )
@@ -35,6 +36,7 @@ type Turn struct {
 func NewTurn(wsConn *websocket.Conn, sshClient *ssh.Client) (*Turn, error) {
 	sess, err := sshClient.NewSession()
 	if err != nil {
+		private.Log.ErrorF("failed to create session: %s", err.Error())
 		return nil, err
 	}
 
@@ -53,9 +55,11 @@ func NewTurn(wsConn *websocket.Conn, sshClient *ssh.Client) (*Turn, error) {
 		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
 	}
 	if err := sess.RequestPty("xterm", 150, 30, modes); err != nil {
+		private.Log.ErrorF("failed to request pty: %s", err.Error())
 		return nil, err
 	}
 	if err := sess.Shell(); err != nil {
+		private.Log.ErrorF("failed to start shell: %s", err.Error())
 		return nil, err
 	}
 

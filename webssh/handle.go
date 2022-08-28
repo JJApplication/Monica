@@ -21,14 +21,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type WebSSHConfig struct {
-	RemoteAddr string
-	User       string
-	Password   string
-	AuthModel  AuthModel
-	PkPath     string
-}
-
 type WebSSH struct {
 	*WebSSHConfig
 }
@@ -48,7 +40,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func (w WebSSH) ServeConn(c *fushinServer.Context) {
-	// 校验authcode码
+	// 校验auth code码
 	auth := c.Query("auth")
 	if auth == "" {
 		c.AbortWithStatus(407)
@@ -58,9 +50,11 @@ func (w WebSSH) ServeConn(c *fushinServer.Context) {
 	}
 	wsConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		c.AbortWithError(200, err)
+		private.Log.ErrorF("websocket upgrade error: %s", err.Error())
+		c.AbortWithStatus(500)
 		return
 	}
+	private.Log.InfoF("websocket connection established: %s", c.Request.RemoteAddr)
 	defer wsConn.Close()
 	var config *SSHClientConfig
 	switch w.AuthModel {
@@ -71,7 +65,7 @@ func (w WebSSH) ServeConn(c *fushinServer.Context) {
 			w.Password,
 		)
 	case PUBLICKEY:
-		config = SSHClientConfigPulicKey(
+		config = SSHClientConfigPublicKey(
 			w.RemoteAddr,
 			w.User,
 			w.PkPath,
@@ -80,6 +74,7 @@ func (w WebSSH) ServeConn(c *fushinServer.Context) {
 
 	client, err := NewSSHClient(config)
 	if err != nil {
+		private.Log.ErrorF("failed to create new ssh client: %s", err.Error())
 		wsConn.WriteControl(websocket.CloseMessage,
 			[]byte(err.Error()), time.Now().Add(time.Second))
 		return
@@ -89,6 +84,7 @@ func (w WebSSH) ServeConn(c *fushinServer.Context) {
 	turn, err := NewTurn(wsConn, client)
 
 	if err != nil {
+		private.Log.ErrorF("failed to create turn: %s", err.Error())
 		wsConn.WriteControl(websocket.CloseMessage,
 			[]byte(err.Error()), time.Now().Add(time.Second))
 		return

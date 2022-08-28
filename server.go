@@ -17,7 +17,12 @@ import (
 // new a websocket server
 
 func loadConfig() {
-	private.Log.InfoF("load config:\nAddress: %s Port: %d Token: %s RemoteAddr: %s", Address, Port, Token, RemoteAddr)
+	private.Log.InfoF("load config:\nAddress: %s Port: %d Token: %s RemoteAddr: %s PublicKey: %s",
+		Address,
+		Port,
+		Token,
+		RemoteAddr,
+		PublicKey)
 }
 
 func initServer() *http.Server {
@@ -46,7 +51,8 @@ func addHandler(s *http.Server) {
 		RemoteAddr: RemoteAddr,
 		User:       SSHUser,
 		Password:   SSHPassWD,
-		AuthModel:  webssh.PASSWORD,
+		AuthModel:  webssh.PUBLICKEY,
+		PkPath:     PublicKey,
 	}
 	handle := webssh.NewWebSSH(config)
 	s.Route(http.GET, "/ws", handle.ServeConn)
